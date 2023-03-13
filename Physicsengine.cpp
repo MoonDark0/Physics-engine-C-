@@ -7,8 +7,8 @@
 //
 //setup
 //config
-int horl=1920;
-int vleng=1080;
+int horl=1900;
+int vleng=1000;
 double grav=5;
 double substep=1.d/60.d;
 bool Heatcol=false;//HEAT transfer in colisons
@@ -156,16 +156,16 @@ if(constype==0){
 }
 if(constype==1){
     for(int i=0;i<lenplist;i++){
-        if(plist[i].pos.y+plist[i].radius<-vleng/2){
+        if(plist[i].pos.y-plist[i].radius<-vleng/2){
             plist[i].pos.y=-vleng/2.f+plist[i].radius;
         }
-        if(plist[i].pos.y-plist[i].radius>vleng/2){
+        if(plist[i].pos.y+plist[i].radius>vleng/2){
             plist[i].pos.y=vleng/2.f-plist[i].radius;
         }
-        if(plist[i].pos.x+plist[i].radius<-horl/2){
+        if(plist[i].pos.x-plist[i].radius<-horl/2){
             plist[i].pos.x=-horl/2.f+plist[i].radius;
         }
-        if(plist[i].pos.x-plist[i].radius>horl/2){
+        if(plist[i].pos.x+plist[i].radius>horl/2){
             plist[i].pos.x=horl/2.f-plist[i].radius;
         }
     }
