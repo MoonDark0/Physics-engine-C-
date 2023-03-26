@@ -19,7 +19,7 @@ double heatloss=0;
 double heatbounce=0;//particle
 double heatcons=0.01;//constrain
 int constype=1;
-
+bool fullscreen=true;
 
 struct spring
 {
@@ -83,7 +83,7 @@ int lenslist=0;
 int sort(){
     for(int i=1;i<lenplist;i++){
         int ar=0;
-        for(int o=i-1;o>-1 && plist[sortbyx[o]].pos.x>plist[sortbyx[i-ar]].pos.x;o--){
+        for(int o=i-1;o>-1 && plist[sortbyx[o]].pos.x-plist[sortbyx[o]].radius>plist[sortbyx[i-ar]].pos.x-plist[sortbyx[i-ar]].radius;o--){
             int temp=sortbyx[o];
             sortbyx[o]=sortbyx[i-ar];
             sortbyx[i-ar]=temp;
@@ -157,16 +157,16 @@ if(constype==0){
 if(constype==1){
     for(int i=0;i<lenplist;i++){
         if(plist[i].pos.y-plist[i].radius<-vleng/2){
-            plist[i].pos.y=-vleng/2.f+plist[i].radius;
+            plist[i].pos.y=-vleng/2.d+plist[i].radius;
         }
         if(plist[i].pos.y+plist[i].radius>vleng/2){
-            plist[i].pos.y=vleng/2.f-plist[i].radius;
+            plist[i].pos.y=vleng/2.d-plist[i].radius;
         }
         if(plist[i].pos.x-plist[i].radius<-horl/2){
-            plist[i].pos.x=-horl/2.f+plist[i].radius;
+            plist[i].pos.x=-horl/2.d+plist[i].radius;
         }
         if(plist[i].pos.x+plist[i].radius>horl/2){
-            plist[i].pos.x=horl/2.f-plist[i].radius;
+            plist[i].pos.x=horl/2.d-plist[i].radius;
         }
     }
 }
@@ -190,7 +190,7 @@ int solve(int i,int j){
     return 0;
 }
 
-int colisions(){
+int sweepandprune(){
     for(int i=0;i<lenplist;i++){
         for(int j=i+1;j<lenplist;j++){
             double radius=plist[i].radius+plist[j].radius;
@@ -206,23 +206,36 @@ int colisions(){
 
     return 0;
 }
+
 //main
 int physics(){
 cleanacc();
-colisions();
+sort();
+sweepandprune();
 constrains();
 move(); 
-sort();
-    return 0;
+
+return 0;
 }
+
+int generate(int o){
+    if(o<4000 && o>-1&& o%4==0){
+            addobj(-700,-400,200,0,(int)(sin(o/3.d)*7+9),(int)(sin(o/3)*127+128),(int)(cos(o/4)*127+128),(int)(sin(o/7)*127+128));
+            
+        }
+        o++;
+        return o;
+
+}
+
 int main()
 {   
-    int o=0;
+    int o=-500;
     sf::RenderWindow window(sf::VideoMode(horl, vleng), "SFML window");
     window.setFramerateLimit(60);
     
-    addobj(0,100,0,0,10,100,255,100);
-    addobj(100,100,0,0,10,100,0,100);
+    //addobj(0,100,0,0,10,100,255,100);
+    //addobj(100,100,0,0,10,100,0,100);
     while (window.isOpen())
     {
         // check all the window's events that were triggered since the last iteration of the loop
@@ -233,10 +246,7 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
         };
-        if(o<1000){
-            addobj(rand()%800-400,-100,rand()%200-100,rand()%200-100,rand()%9+1,rand()%155+100,rand()%155+100,rand()%155+100);
-            o++;
-        }
+        
         for(int p=0;p<2;p++){
          physics();  
         }
@@ -252,6 +262,7 @@ int main()
         if(constype==1){
             window.clear(sf::Color(0,0,0));
         }
+        o=generate(o);
         c1.setPointCount(40);
         for(int i=0;i<lenplist;i++){
         c1.setRadius(plist[i].radius);
@@ -259,7 +270,6 @@ int main()
         c1.setPosition(plist[i].pos.x+horl/2-plist[i].radius,plist[i].pos.y+vleng/2-plist[i].radius);
         window.draw(c1);
         };
-        
         // end the current frame
         window.display();
     }
