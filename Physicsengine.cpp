@@ -95,9 +95,6 @@ int sort(){
 //addparticle WIP
 int addobj(double px,double py,double spx,double spy,double radius,int r,int g,int b){
     particle p ={{px,py},{px-spx*substep,py-spy*substep},1,0,radius,radius,0,false,{0,0},r,g,b};
-    plist[lenplist]=p;
-    sortbyx[lenplist]=lenplist;
-    lenplist++;
     particle *nplist= new particle[lenplist+1];
     int *nsortbyx= new int[lenplist+1];
     for(int i=0;i<lenplist;i++){
@@ -108,6 +105,13 @@ int addobj(double px,double py,double spx,double spy,double radius,int r,int g,i
     delete[] sortbyx;
     plist=nplist;
     sortbyx=nsortbyx;
+    
+    plist[lenplist]=p;
+    sortbyx[lenplist]=lenplist;
+    lenplist++;
+    
+    
+    
 return 0;
 }
 //done cleans aceleration
@@ -191,18 +195,30 @@ int solve(int i,int j){
 }
 
 int sweepandprune(){
-    for(int i=0;i<lenplist;i++){
-        for(int j=i+1;j<lenplist;j++){
-            double radius=plist[i].radius+plist[j].radius;
-            vector2 vi=getvec2(plist[j].pos,plist[i].pos);
+    int *activelist = new int[lenplist];
+    activelist[0]=sortbyx[0];
+    for(int i=1;i<lenplist;i++){
+        int k =1;
+        while((i-k)>-1  && plist[activelist[i-k]].pos.x+plist[activelist[i-k]].radius>=plist[sortbyx[i]].pos.x-plist[sortbyx[i]].radius ){
+            double radius=plist[activelist[i-k]].radius+plist[sortbyx[i]].radius;
+            vector2 vi=getvec2(plist[activelist[i-k]].pos,plist[sortbyx[i]].pos);
             double leng = lengtsq(vi);
             if(radius*radius>leng){
-                solve(i,j);
-
+                solve(sortbyx[i],activelist[i-k]);
             }
+            k++;
         }
-    }
-
+        activelist[i]=sortbyx[i];
+        for(int isor=(i-k);isor<(i+1);isor++){
+        int ar=0;
+        for(int o=isor-1;o>-1 && plist[activelist[o]].pos.x+plist[activelist[o]].radius>plist[activelist[isor-ar]].pos.x+plist[activelist[isor-ar]].radius;o--){
+            int temp=activelist[o];
+            activelist[o]=activelist[isor-ar];
+            activelist[isor-ar]=temp;
+            ar++;
+        }
+        }
+        }
 
     return 0;
 }
@@ -219,7 +235,7 @@ return 0;
 }
 
 int generate(int o){
-    if(o<4000 && o>-1&& o%4==0){
+    if(o<10000 && o>-1){
             addobj(-700,-400,200,0,(int)(sin(o/3.d)*7+9),(int)(sin(o/3)*127+128),(int)(cos(o/4)*127+128),(int)(sin(o/7)*127+128));
             
         }
@@ -267,7 +283,7 @@ int main()
         for(int i=0;i<lenplist;i++){
         c1.setRadius(plist[i].radius);
         c1.setFillColor(sf::Color(plist[i].r,plist[i].g,plist[i].b));
-        c1.setPosition(plist[i].pos.x+horl/2-plist[i].radius,plist[i].pos.y+vleng/2-plist[i].radius);
+        c1.setPosition(plist[i].pos.x+(horl>>1)-plist[i].radius,plist[i].pos.y+(vleng>>1)-plist[i].radius);
         window.draw(c1);
         };
         // end the current frame
