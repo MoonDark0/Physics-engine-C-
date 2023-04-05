@@ -81,16 +81,16 @@ int lenslist=0;
 
 //main functions
 
-int sort(int *sorts,int lengs){
-    for(int i=1;i<lengs;i++){
+int sort(){
+    for(int i=1;i<lenplist;i++){
         int ar=i-1;
-        int currentpos=sorts[i];
-        double current=plist[sorts[i]].pos.x-plist[sorts[i]].radius;
-        while(ar>-1 && (plist[sorts[ar]].pos.x-plist[sorts[ar]].radius)>(current)){
-            sorts[ar+1]=sorts[ar];
+        int currentpos=sortbyx[i];
+        double current=plist[sortbyx[i]].pos.x-plist[sortbyx[i]].radius;
+        while(ar>-1 && (plist[sortbyx[ar]].pos.x-plist[sortbyx[ar]].radius)>(current)){
+            sortbyx[ar+1]=sortbyx[ar];
             ar--;
         }
-        sorts[ar+1]=currentpos;
+        sortbyx[ar+1]=currentpos;
     }
     return 0;
 }
@@ -312,8 +312,8 @@ int colision(){
 //main
 int physics(){
 cleanacc();
-//sort(sortbyx,lenplist);
-quicksort(lenplist,sortbyx);
+sort();
+//quicksort(lenplist,sortbyx);
 sweepandprune();
 //colision();
 constrains();
