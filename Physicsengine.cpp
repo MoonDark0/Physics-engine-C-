@@ -80,18 +80,62 @@ int lenplist=0;
 int lenslist=0;
 
 //main functions
-int sort(){
-    for(int i=1;i<lenplist;i++){
-        int ar=0;
-        for(int o=i-1;o>-1 && plist[sortbyx[o]].pos.x-plist[sortbyx[o]].radius>plist[sortbyx[i-ar]].pos.x-plist[sortbyx[i-ar]].radius;o--){
-            int temp=sortbyx[o];
-            sortbyx[o]=sortbyx[i-ar];
-            sortbyx[i-ar]=temp;
-            ar++;
+
+int sort(int *sorts,int lengs){
+    for(int i=1;i<lengs;i++){
+        int ar=i-1;
+        int currentpos=sorts[i];
+        double current=plist[sorts[i]].pos.x-plist[sorts[i]].radius;
+        while(ar>-1 && (plist[sorts[ar]].pos.x-plist[sorts[ar]].radius)>(current)){
+            sorts[ar+1]=sorts[ar];
+            ar--;
         }
+        sorts[ar+1]=currentpos;
     }
     return 0;
 }
+
+
+int quicksort(int leng,int *array){
+    if(leng<2){
+        return 0;
+    }
+    int alen=0;
+    int blen=0;
+    int *a = new int[leng];
+    int *b = new int[leng];
+    int pivot=array[leng/2];
+    for(int i=0;i<leng;i++){
+        if(leng/2==i){
+
+        }
+        else{
+        if ((plist[array[i]].pos.x-plist[array[i]].radius)<(plist[pivot].pos.x-plist[pivot].radius)){
+            a[alen]=array[i];
+            alen++;
+        }
+        else{
+            b[blen]=array[i];
+            blen++;
+        }
+        }
+    }
+    quicksort(alen,a);
+    quicksort(blen,b);
+    
+    for(int i=0;i<blen;i++){
+        array[i]=b[i];
+    }
+    array[blen]=pivot;
+    for(int i=0;i<alen;i++){
+        array[blen+1+i]=a[i];
+    }
+    delete[] a;
+    delete[] b;
+    return 0;
+}
+
+
 //addparticle WIP
 int addobj(double px,double py,double spx,double spy,double radius,int r,int g,int b){
     particle p ={{px,py},{px-spx*substep,py-spy*substep},1,0,radius,radius,0,false,{0,0},r,g,b};
@@ -105,7 +149,7 @@ int addobj(double px,double py,double spx,double spy,double radius,int r,int g,i
     delete[] sortbyx;
     plist=nplist;
     sortbyx=nsortbyx;
-    
+
     plist[lenplist]=p;
     sortbyx[lenplist]=lenplist;
     lenplist++;
@@ -195,39 +239,83 @@ int solve(int i,int j){
 }
 
 int sweepandprune(){
-    int *activelist = new int[lenplist];
-    activelist[0]=sortbyx[0];
-    for(int i=1;i<lenplist;i++){
-        int k =1;
-        while((i-k)>-1  && plist[activelist[i-k]].pos.x+plist[activelist[i-k]].radius>=plist[sortbyx[i]].pos.x-plist[sortbyx[i]].radius ){
-            double radius=plist[activelist[i-k]].radius+plist[sortbyx[i]].radius;
-            vector2 vi=getvec2(plist[activelist[i-k]].pos,plist[sortbyx[i]].pos);
+    int poscollen=0;
+    int expand=1;
+    int* posiblecol = (int*)malloc(2*sizeof(int));
+    int *activelist = new int[lenplist+1];
+    for(int i=0;i<lenplist;i++){
+        activelist[i]=sortbyx[i];
+        int k=1;
+        int off=0;
+        while(((i-k)>-1) && (plist[activelist[i-k]].pos.x+ plist[activelist[i-k]].radius)>=(plist[activelist[i-off]].pos.x - plist[activelist[i-off]].radius)){
+         
+           
+                if (poscollen==expand){
+                    int* newposiblecol = (int*)realloc(posiblecol,expand*4*sizeof(int));
+                    expand=expand*2;
+                    if(newposiblecol==NULL){
+                        free(posiblecol);
+                        perror("COLISION");
+                    }
+                    posiblecol=newposiblecol;
+                }
+                posiblecol[poscollen*2]=activelist[i-k];
+                posiblecol[poscollen*2+1]=activelist[i-off];
+                poscollen++;
+            
+        if((plist[activelist[i-k]].pos.x+plist[activelist[i-k]].radius)>(plist[activelist[i-off]].pos.x + plist[activelist[i-off]].radius)){
+            int tmp=activelist[i-k];
+            activelist[i-k]=activelist[i-off];
+            activelist[i-off]=tmp;
+            off++;
+
+        }
+        k++;
+        }
+    }
+        delete[] activelist;
+        for(int o=0;o<poscollen;o++){
+            int i=posiblecol[o*2];
+            int j=posiblecol[o*2+1];
+          double radius=plist[i].radius+plist[j].radius;
+            vector2 vi=getvec2(plist[i].pos,plist[j].pos);
+            
             double leng = lengtsq(vi);
             if(radius*radius>leng){
-                solve(sortbyx[i],activelist[i-k]);
+                solve(i,j);
             }
-            k++;
-        }
-        activelist[i]=sortbyx[i];
-        for(int isor=(i-k);isor<(i+1);isor++){
-        int ar=0;
-        for(int o=isor-1;o>-1 && plist[activelist[o]].pos.x+plist[activelist[o]].radius>plist[activelist[isor-ar]].pos.x+plist[activelist[isor-ar]].radius;o--){
-            int temp=activelist[o];
-            activelist[o]=activelist[isor-ar];
-            activelist[isor-ar]=temp;
-            ar++;
-        }
-        }
-        }
 
+            
+        }
+        free(posiblecol);
+    return 0;
+}
+
+
+
+int colision(){
+    for(int i=0;i<lenplist;i++){
+        for(int j=i+1;j<lenplist;j++){
+            double radius=plist[i].radius+plist[j].radius;
+            vector2 vi=getvec2(plist[i].pos,plist[j].pos);
+            
+            double leng = lengtsq(vi);
+            if(radius*radius>leng){
+                solve(i,j);
+            }
+
+        }
+    }
     return 0;
 }
 
 //main
 int physics(){
 cleanacc();
-sort();
+//sort(sortbyx,lenplist);
+quicksort(lenplist,sortbyx);
 sweepandprune();
+//colision();
 constrains();
 move(); 
 
@@ -236,7 +324,7 @@ return 0;
 
 int generate(int o){
     if(o<10000 && o>-1){
-            addobj(-700,-400,200,0,(int)(sin(o/3.d)*7+9),(int)(sin(o/3)*127+128),(int)(cos(o/4)*127+128),(int)(sin(o/7)*127+128));
+            addobj(-700,-400,200,0,(int)(sin(o/3.d)*3+4),(int)(sin(o/3)*127+128),(int)(cos(o/4)*127+128),(int)(sin(o/7)*127+128));
             
         }
         o++;
@@ -266,9 +354,10 @@ int main()
         for(int p=0;p<2;p++){
          physics();  
         }
-        window.clear(sf::Color(100,100,100));
+        std::cout<<lenplist<<"\n";
         sf::CircleShape c1(20.f);
         if(constype==0){
+            window.clear(sf::Color(100,100,100));
             c1.setRadius(450);
             c1.setPosition(horl/2-450,vleng/2-450);
             c1.setFillColor(sf::Color::Black);
